@@ -1,0 +1,39 @@
+language: node_js
+
+cache:
+  directories:
+    - "node_modules"
+  yarn: true
+
+node_js:
+  - "8"
+
+script:
+  - echo "OK" || npm test
+
+branches:
+  only:
+  - develop
+
+notifications:
+  slack: guneysu:g4dUCQCfxQ4tHZziwDMOlU7k
+
+before_deploy:
+  - npm run build
+  - tar caf dist.tar.gz dist/
+  - git config --local user.name "$GITHUB_NAME"
+  - git config --local user.email "$GITHUB_EMAIL"
+  - git tag "$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)"
+
+deploy:
+  - provider: surge
+    on: develop
+    skip_cleanup: true
+    project: ./dist/
+    domain: guneysus.surge.sh
+
+  - provider: releases
+    on: develop  
+    skip_cleanup: true
+    api_key: $GITHUB_TOKEN
+    file: dist.tar.gz
